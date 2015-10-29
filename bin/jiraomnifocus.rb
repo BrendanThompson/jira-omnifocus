@@ -3,23 +3,23 @@
 require 'bundler/setup'
 Bundler.require(:default)
 
-require 'appscript'
+require 'rb-scpt'
 require 'yaml'
 require 'net/http'
 
 opts = Trollop::options do
   banner ""
   banner <<-EOS
-Jira Omnifocus Sync Tool
+  Jira Omnifocus Sync Tool
 
-Usage:
-       jofsync [options]
+  Usage:
+    jofsync [options]
 
-KNOWN ISSUES:
-      * With long names you must use an equal sign ( i.e. --hostname=test-target-1 )
+  KNOWN ISSUES:
+    * With long names you must use an equal sign ( i.e. --hostname=test-target-1 )
 
----
-EOS
+  ---
+    EOS
   version 'jofsync 1.0.0'
   opt :username, 'Jira Username', :type => :string, :short => 'u', :required => false
   opt :password, 'Jira Password', :type => :string, :short => 'p', :required => false
@@ -66,7 +66,7 @@ syms.each { |x|
       puts 'Please provide a ' + x.to_s + ' value on the CLI or in the config file.'
       exit 1
     end
- end
+  end
 }
 
 unless opts[:password]
@@ -102,14 +102,14 @@ def get_issues
     response = http.request request
     # If the response was good, then grab the data
     if response.code =~ /20[0-9]{1}/
-        data = JSON.parse(response.body)
-        data["issues"].each do |item|
-          jira_id = item["key"]
-#          jira_issues[jira_id] = item["fields"]["summary"]
-          jira_issues[jira_id] = item
-        end
+      data = JSON.parse(response.body)
+      data["issues"].each do |item|
+        jira_id = item["key"]
+        #          jira_issues[jira_id] = item["fields"]["summary"]
+        jira_issues[jira_id] = item
+      end
     else
-     raise StandardError, "Unsuccessful HTTP response code: " + response.code
+      raise StandardError, "Unsuccessful HTTP response code: " + response.code
     end
   end
   return jira_issues
@@ -147,7 +147,7 @@ def add_task(omnifocus_document, new_task_properties)
   tprops[:context] = ctx if new_task_properties['context']
 
   # You can uncomment this line and comment the one below if you want the tasks to end up in your Inbox instead of a specific Project
-#  new_task = omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
+  #  new_task = omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
 
   # Make a new Task in the Project
   proj.make(:new => :task, :with_properties => tprops)
@@ -175,7 +175,7 @@ def add_jira_tickets_to_omnifocus ()
     task_name = "#{jira_id}: #{ticket["fields"]["summary"]}"
     # Create the task notes with the Jira Ticket URL
     task_notes = "#{JIRA_BASE_URL}/browse/#{jira_id}"
-    
+
     # Build properties for the Task
     @props = {}
     @props['name'] = task_name
@@ -208,31 +208,31 @@ def mark_resolved_jira_tickets_as_complete_in_omnifocus ()
         request.basic_auth USERNAME, PASSWORD
         response = http.request request
 
-  if response.code =~ /20[0-9]{1}/
-            data = JSON.parse(response.body)
-            # Check to see if the Jira ticket has been resolved, if so mark it as complete.
-            resolution = data["fields"]["resolution"]
-            if resolution != nil
-              # if resolved, mark it as complete in OmniFocus
-              if task.completed.get != true
-                task.completed.set(true)
-                puts "task marked completed"
-              end
+        if response.code =~ /20[0-9]{1}/
+          data = JSON.parse(response.body)
+          # Check to see if the Jira ticket has been resolved, if so mark it as complete.
+          resolution = data["fields"]["resolution"]
+          if resolution != nil
+            # if resolved, mark it as complete in OmniFocus
+            if task.completed.get != true
+              task.completed.set(true)
+              puts "task marked completed"
             end
-            # Check to see if the Jira ticket has been unassigned or assigned to someone else, if so delete it.
-            # It will be re-created if it is assigned back to you.
-            if ! data["fields"]["assignee"]
+          end
+          # Check to see if the Jira ticket has been unassigned or assigned to someone else, if so delete it.
+          # It will be re-created if it is assigned back to you.
+          if ! data["fields"]["assignee"]
+            omnifocus_document.delete task
+            puts "task removed"
+          else
+            assignee = data["fields"]["assignee"]["name"]
+            if assignee != USERNAME
               omnifocus_document.delete task
               puts "task removed"
-            else
-              assignee = data["fields"]["assignee"]["name"]
-              if assignee != USERNAME
-                omnifocus_document.delete task
-                puts "task removed"
-              end
             end
+          end
         else
-         raise StandardError, "Unsuccessful response code " + response.code + " for issue " + issue
+          raise StandardError, "Unsuccessful response code " + response.code + " for issue " + issue
         end
       end
     end
@@ -244,10 +244,10 @@ def app_is_running(app_name)
 end
 
 def main ()
-   if app_is_running("OmniFocus")
-	  add_jira_tickets_to_omnifocus
-	  mark_resolved_jira_tickets_as_complete_in_omnifocus
-   end
+  if app_is_running("OmniFocus")
+    add_jira_tickets_to_omnifocus
+    mark_resolved_jira_tickets_as_complete_in_omnifocus
+  end
 end
 
 main
