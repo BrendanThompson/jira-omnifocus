@@ -120,23 +120,18 @@ def add_task(omnifocus_document, new_task_properties)
   # If there is a passed in OF project name, get the actual project object
   if new_task_properties['project']
     proj_name = new_task_properties["project"]
+    name = new_task_properties["name"]
     if proj_name["inbox"]
-        proj = omnifocus_document.flattened_tasks
-        proj.tasks.get.find.each do |task|
-            puts task.methods
+        tasks = omnifocus_document.flattened_tasks
+        if tasks.get.find { |t| t.name.get == name }
+            return false
         end
     else
         proj = omnifocus_document.flattened_tasks[proj_name]
+        if proj.tasks.get.find { |t| t.name.get == name }
+            return false
+        end
     end
-  end
-
-  # Check to see if there's already an OF Task with that name in the referenced Project
-  # If there is, just stop.
-  name = new_task_properties["name"]
-  exists = proj.tasks.get.find { |t| t.name.get == name } #t.name.get.force_encoding("UTF-11") == name }
-
-  if exists
-      return false
   end
 
   # If there is a passed in OF context name, get the actual context object
