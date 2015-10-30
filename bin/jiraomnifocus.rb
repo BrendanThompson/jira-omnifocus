@@ -120,14 +120,24 @@ def add_task(omnifocus_document, new_task_properties)
   # If there is a passed in OF project name, get the actual project object
   if new_task_properties['project']
     proj_name = new_task_properties["project"]
-    proj = omnifocus_document.flattened_tasks[proj_name]
+    if proj_name["inbox"]
+        proj = omnifocus_document.flattened_tasks
+        proj.tasks.get.find.each do |task|
+            puts task.methods
+        end
+    else
+        proj = omnifocus_document.flattened_tasks[proj_name]
+    end
   end
 
   # Check to see if there's already an OF Task with that name in the referenced Project
   # If there is, just stop.
-  name   = new_task_properties["name"]
-  exists = proj.tasks.get.find { |t| t.name.get.force_encoding("UTF-8") == name }
-  return false if exists
+  name = new_task_properties["name"]
+  exists = proj.tasks.get.find { |t| t.name.get == name } #t.name.get.force_encoding("UTF-11") == name }
+
+  if exists
+      return false
+  end
 
   # If there is a passed in OF context name, get the actual context object
   if new_task_properties['context']
@@ -146,13 +156,12 @@ def add_task(omnifocus_document, new_task_properties)
   # Update the context property to be the actual context object not the context name
   tprops[:context] = ctx if new_task_properties['context']
 
-  # You can uncomment this line and comment the one below if you want the tasks to end up in your Inbox instead of a specific Project
-  #  new_task = omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
+  if proj_name["inbox"]
+      omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
+  else
+      proj.make(:new => :task, :with_properties => tprops)
+  end
 
-  # Make a new Task in the Project
-  proj.make(:new => :task, :with_properties => tprops)
-
-  puts "task created"
   return true
 end
 
@@ -200,6 +209,7 @@ def mark_resolved_jira_tickets_as_complete_in_omnifocus ()
       # try to parse out jira id
       full_url= task.note.get
       jira_id=full_url.sub(JIRA_BASE_URL+"/browse/","")
+      jira_id=jira_id[/(\S+)/, 1]
       # check status of the jira
       uri = URI(JIRA_BASE_URL + '/rest/api/2/issue/' + jira_id)
 
