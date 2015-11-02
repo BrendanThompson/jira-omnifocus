@@ -4,5 +4,6 @@ gem 'rb-scpt'
 gem 'json'
 gem 'trollop'
 gem 'jira-ruby', :git => 'https://github.com/sumoheavy/jira-ruby.git'
+gem 'ruby-keychain', :require => 'keychain'
 gem 'highline'
 
