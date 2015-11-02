@@ -20,7 +20,7 @@ GEM
     json (1.8.1)
     minitest (5.4.0)
     oauth (0.4.7)
-    rb-appscript (0.6.1)
+    rb-scpt (1.0.1)
     thread_safe (0.3.4)
     trollop (2.0)
     tzinfo (1.2.2)
@@ -33,5 +33,5 @@ DEPENDENCIES
   highline
   jira-ruby!
   json
-  rb-appscript
+  rb-scpt
   trollop
