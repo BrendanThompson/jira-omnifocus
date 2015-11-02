@@ -6,6 +6,7 @@ Bundler.require(:default)
 require 'rb-scpt'
 require 'yaml'
 require 'net/http'
+require 'keychain'
 
 opts = Trollop::options do
   banner ""
@@ -94,11 +95,13 @@ FLAGGED = opts[:flag]
 def get_issues
   jira_issues = Hash.new
   # This is the REST URL that will be hit.  Change the jql query if you want to adjust the query used here
+  keychain_item = Keychain.internet_passwords.where(:server => JIRA_BASE_URL).first
+  jira_username = keychain_item.account
   uri = URI(JIRA_BASE_URL + '/rest/api/2/search?jql=' + JQL)
 
   Net::HTTP.start(uri.hostname, uri.port, :use_ssl => uri.scheme == 'https') do |http|
     request = Net::HTTP::Get.new(uri)
-    request.basic_auth USERNAME, PASSWORD
+    request.basic_auth jira_username, keychain_item.password
     response = http.request request
     # If the response was good, then grab the data
     if response.code =~ /20[0-9]{1}/
@@ -196,6 +199,8 @@ end
 
 def mark_resolved_jira_tickets_as_complete_in_omnifocus ()
   # get tasks from the project
+   keychain_item = Keychain.internet_passwords.where(:server => JIRA_BASE_URL).first
+   jira_username = keychain_item.account
   omnifocus_app = Appscript.app.by_name("OmniFocus")
   omnifocus_document = omnifocus_app.default_document
   ctx = omnifocus_document.flattened_contexts[DEFAULT_CONTEXT]
@@ -210,7 +215,7 @@ def mark_resolved_jira_tickets_as_complete_in_omnifocus ()
 
       Net::HTTP.start(uri.hostname, uri.port, :use_ssl => uri.scheme == 'https') do |http|
         request = Net::HTTP::Get.new(uri)
-        request.basic_auth USERNAME, PASSWORD
+        request.basic_auth jira_username, keychain_item.password
         response = http.request request
 
         if response.code =~ /20[0-9]{1}/
@@ -248,10 +253,18 @@ def app_is_running(app_name)
   `ps aux` =~ /#{app_name}/ ? true : false
 end
 
+def keychain_test()
+    uri = 'https://pacificenc.atlassian.net/'
+    keychain_item = Keychain.internet_passwords.where(:server => uri).first
+    jira_username = keychain_item.account
+    puts jira_username
+end
+
 def main ()
   if app_is_running("OmniFocus")
-    add_jira_tickets_to_omnifocus
-    mark_resolved_jira_tickets_as_complete_in_omnifocus
+    #add_jira_tickets_to_omnifocus
+    #mark_resolved_jira_tickets_as_complete_in_omnifocus
+    keychain_test
   end
 end
 
